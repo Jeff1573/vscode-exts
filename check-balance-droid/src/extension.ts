@@ -72,6 +72,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.globalState.setKeysForSync(['cachedUsageData', 'lastUpdateTimestamp']);
 
+  const cachedData = context.globalState.get<UsageData>('cachedUsageData');
+  if (cachedData) {
+    updateStatusBarFromData(cachedData);
+  }
+
   updateStatusBar();
 
   let intervalId: NodeJS.Timeout;
@@ -165,21 +170,14 @@ async function fetchUsageData(apiKey: string): Promise<UsageData | null> {
 
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
-        vscode.window.showErrorMessage('API Key 无效，请重新设置');
-      } else {
-        vscode.window.showErrorMessage(`获取余额失败: ${error.message}`);
-      }
-    } else {
-      vscode.window.showErrorMessage('获取余额失败');
-    }
+    console.error('Failed to fetch usage data:', error);
     return null;
   }
 }
 
 async function updateStatusBar() {
-  const apiKey = await getApiKey();
+  const config = vscode.workspace.getConfiguration('checkBalanceDroid');
+  const apiKey = config.get<string>('apiKey');
 
   if (!apiKey) {
     statusBarItem.text = '$(warning) Factory AI - 未设置 Key';

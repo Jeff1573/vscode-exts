@@ -2,7 +2,12 @@
   "name": "check-balance-droid",
   "displayName": "Check Balance Droid",
   "description": "查看 Factory AI 余额使用情况",
-  "version": "0.0.2",
+  "version": "0.0.3",
+  "publisher": "factory-ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/factory-ai/check-balance-droid"
+  },
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -36,7 +41,7 @@
         },
         "checkBalanceDroid.refreshInterval": {
           "type": "number",
-          "default": 1,
+          "default": 5,
           "minimum": 1,
           "maximum": 60,
           "description": "自动刷新间隔（分钟）",
