@@ -27,8 +27,11 @@ interface UsageData {
 }
 
 let statusBarItem: vscode.StatusBarItem;
+let globalContext: vscode.ExtensionContext;
 
 export function activate(context: vscode.ExtensionContext) {
+  globalContext = context;
+
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
@@ -67,22 +70,42 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(statusBarItem, checkBalanceCommand, setApiKeyCommand);
 
+  context.globalState.setKeysForSync(['cachedUsageData', 'lastUpdateTimestamp']);
+
   updateStatusBar();
 
   let intervalId: NodeJS.Timeout;
+  let syncCheckIntervalId: NodeJS.Timeout;
 
   const startRefreshInterval = () => {
     if (intervalId) {
       clearInterval(intervalId);
     }
     const config = vscode.workspace.getConfiguration('checkBalanceDroid');
-    const refreshInterval = config.get<number>('refreshInterval') || 5;
+    const refreshInterval = config.get<number>('refreshInterval') || 1;
     intervalId = setInterval(() => {
       updateStatusBar();
     }, refreshInterval * 60 * 1000);
   };
 
+  const startSyncCheckInterval = () => {
+    if (syncCheckIntervalId) {
+      clearInterval(syncCheckIntervalId);
+    }
+
+    let lastKnownTimestamp = context.globalState.get<number>('lastUpdateTimestamp', 0);
+
+    syncCheckIntervalId = setInterval(() => {
+      const currentTimestamp = context.globalState.get<number>('lastUpdateTimestamp', 0);
+      if (currentTimestamp > lastKnownTimestamp) {
+        lastKnownTimestamp = currentTimestamp;
+        updateStatusBarFromCache();
+      }
+    }, 1000);
+  };
+
   startRefreshInterval();
+  startSyncCheckInterval();
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
@@ -97,6 +120,9 @@ export function activate(context: vscode.ExtensionContext) {
       dispose: () => {
         if (intervalId) {
           clearInterval(intervalId);
+        }
+        if (syncCheckIntervalId) {
+          clearInterval(syncCheckIntervalId);
         }
       }
     }
@@ -169,6 +195,22 @@ async function updateStatusBar() {
     return;
   }
 
+  await globalContext.globalState.update('cachedUsageData', data);
+  await globalContext.globalState.update('lastUpdateTimestamp', Date.now());
+  updateStatusBarFromData(data);
+}
+
+function updateStatusBarFromCache() {
+  const cachedData = globalContext.globalState.get<UsageData>('cachedUsageData');
+
+  if (!cachedData) {
+    return;
+  }
+
+  updateStatusBarFromData(cachedData);
+}
+
+function updateStatusBarFromData(data: UsageData) {
   const { standard } = data.usage;
   const usedPercent = (standard.usedRatio * 100).toFixed(2);
   const usedTokens = formatNumber(standard.orgTotalTokensUsed);

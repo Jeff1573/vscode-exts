@@ -36,7 +36,7 @@
         },
         "checkBalanceDroid.refreshInterval": {
           "type": "number",
-          "default": 5,
+          "default": 1,
           "minimum": 1,
           "maximum": 60,
           "description": "自动刷新间隔（分钟）",
