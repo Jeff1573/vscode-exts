@@ -1,32 +1,29 @@
-const eslint = require('@eslint/js');
-const tseslint = require('typescript-eslint');
+const typescriptParser = require('@typescript-eslint/parser');
+const typescriptPlugin = require('@typescript-eslint/eslint-plugin');
 
-module.exports = tseslint.config(
-  eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+module.exports = [
   {
+    ignores: ['out/', 'node_modules/', '.vscode-test/'],
+  },
+  {
+    files: ['src/**/*.ts'],
     languageOptions: {
+      parser: typescriptParser,
       parserOptions: {
-        project: true,
+        project: './tsconfig.json',
         tsconfigRootDir: __dirname,
       },
     },
+    plugins: {
+      '@typescript-eslint': typescriptPlugin,
+    },
     rules: {
-      '@typescript-eslint/naming-convention': [
-        'warn',
-        {
-          selector: 'import',
-          format: ['camelCase', 'PascalCase'],
-        },
-      ],
-      '@typescript-eslint/semi': 'warn',
+      ...typescriptPlugin.configs['recommended'].rules,
+      '@typescript-eslint/naming-convention': 'warn',
       'curly': 'warn',
       'eqeqeq': 'warn',
       'no-throw-literal': 'warn',
       'semi': 'off',
     },
   },
-  {
-    ignores: ['out/', 'node_modules/', '.vscode-test/'],
-  }
-);
+];
