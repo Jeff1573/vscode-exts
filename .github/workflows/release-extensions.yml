@@ -1,0 +1,103 @@
+name: Release VSCode Extensions
+
+on:
+  push:
+    tags:
+      - '*-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract extension info from tag
+        id: tag_info
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          EXT_NAME=${TAG_NAME%-v*}
+          VERSION=${TAG_NAME#*-v}
+
+          echo "extension=$EXT_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+
+          echo "Extension: $EXT_NAME"
+          echo "Version: $VERSION"
+
+      - name: Verify extension directory exists
+        run: |
+          if [ ! -d "./${{ steps.tag_info.outputs.extension }}" ]; then
+            echo "Error: Extension directory ./${{ steps.tag_info.outputs.extension }} not found"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ steps.tag_info.outputs.extension }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./${{ steps.tag_info.outputs.extension }}
+        run: npm ci
+
+      - name: Run lint (if exists)
+        working-directory: ./${{ steps.tag_info.outputs.extension }}
+        run: |
+          if grep -q '"lint"' package.json; then
+            npm run lint
+          else
+            echo "Lint script not found, skipping..."
+          fi
+
+      - name: Compile TypeScript
+        working-directory: ./${{ steps.tag_info.outputs.extension }}
+        run: npm run compile
+
+      - name: Package extension
+        working-directory: ./${{ steps.tag_info.outputs.extension }}
+        run: |
+          if grep -q '"package"' package.json; then
+            npm run package
+          else
+            npm install -g @vscode/vsce
+            vsce package --allow-missing-repository
+          fi
+
+      - name: Get extension display name
+        id: ext_info
+        working-directory: ./${{ steps.tag_info.outputs.extension }}
+        run: |
+          DISPLAY_NAME=$(node -p "require('./package.json').displayName || require('./package.json').name")
+          DESCRIPTION=$(node -p "require('./package.json').description || ''")
+
+          echo "display_name=$DISPLAY_NAME" >> $GITHUB_OUTPUT
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.tag_info.outputs.extension }}/*.vsix
+          tag_name: ${{ steps.tag_info.outputs.tag }}
+          name: ${{ steps.ext_info.outputs.display_name }} v${{ steps.tag_info.outputs.version }}
+          body: |
+            ## ${{ steps.ext_info.outputs.display_name }} v${{ steps.tag_info.outputs.version }}
+
+            ### 功能说明
+            ${{ steps.ext_info.outputs.description }}
+
+            ### 安装方式
+            1. 下载下方的 `.vsix` 文件
+            2. 在 VSCode 中按 `Ctrl+Shift+P` (Windows/Linux) 或 `Cmd+Shift+P` (macOS)
+            3. 输入 "Install from VSIX" 并选择下载的文件
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
