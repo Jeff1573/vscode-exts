@@ -1,0 +1,70 @@
+{
+  "name": "check-balance-droid",
+  "displayName": "Check Balance Droid",
+  "description": "查看 Factory AI 余额使用情况",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "check-balance-droid.checkBalance",
+        "title": "Check Balance"
+      },
+      {
+        "command": "check-balance-droid.setApiKey",
+        "title": "Set Factory AI API Key"
+      }
+    ],
+    "configuration": {
+      "title": "Check Balance Droid",
+      "properties": {
+        "checkBalanceDroid.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Factory AI API Key (从 https://app.factory.ai 获取)",
+          "markdownDescription": "输入你的 Factory AI API Key\n\n获取方式：访问 [Factory AI](https://app.factory.ai) 获取 API Key",
+          "order": 1
+        },
+        "checkBalanceDroid.refreshInterval": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 60,
+          "description": "自动刷新间隔（分钟）",
+          "order": 2
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.95.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "eslint": "^9.15.0",
+    "typescript": "^5.7.2",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  },
+  "dependencies": {
+    "axios": "^1.7.9"
+  }
+}
