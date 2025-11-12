@@ -1,0 +1,120 @@
+{
+  "name": "auto-commit-ext",
+  "displayName": "Auto Commit Message",
+  "description": "基于暂存区更改自动生成并填充 Git 提交信息",
+  "version": "0.0.1",
+  "publisher": "local",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/auto-commit-ext"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "conventional commits",
+    "commit message"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:autoCommitExt.generateCommitMessage",
+    "onCommand:autoCommitExt.testConfig"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "autoCommitExt.generateCommitMessage",
+        "title": "生成提交信息",
+        "category": "Auto Commit",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "autoCommitExt.testConfig",
+        "title": "检测配置",
+        "category": "Auto Commit"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "autoCommitExt.generateCommitMessage",
+          "when": "scmProvider == git",
+          "group": "navigation@10"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "autoCommitExt.generateCommitMessage"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Auto Commit Ext",
+      "properties": {
+        "autoCommitExt.useAI": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否使用 AI 生成提交信息（关闭时使用启发式规则）"
+        },
+        "autoCommitExt.openai.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API Key（为空时读取环境变量 OPENAI_API_KEY）",
+          "scope": "application"
+        },
+        "autoCommitExt.openai.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "OpenAI 模型名称（如 gpt-4o-mini / gpt-4o / o4-mini 等）",
+          "scope": "application"
+        },
+        "autoCommitExt.openai.baseURL": {
+          "type": "string",
+          "default": "",
+          "description": "可选：自定义 OpenAI Base URL（私有代理/企业网关）",
+          "scope": "application"
+        },
+        "autoCommitExt.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "zh",
+            "en"
+          ],
+          "default": "auto",
+          "description": "提交信息语言偏好：自动/中文/英文",
+          "scope": "application"
+        },
+        "autoCommitExt.maxTokens": {
+          "type": "number",
+          "default": 4096,
+          "minimum": 64,
+          "maximum": 16384,
+          "description": "生成最大 tokens（推理模型建议 2048 以上，默认 4096）",
+          "scope": "application"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx --yes vsce@latest package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/vscode": "^1.95.0",
+    "@vscode/vsce": "^2.32.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,68 @@
+name: Release Check Balance Droid
+
+on:
+  push:
+    tags:
+      - 'check-balance-droid-v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: check-balance-droid/package-lock.json
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/check-balance-droid-v}
+          echo "version=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Extension version: $TAG_NAME"
+
+      - name: Install dependencies
+        working-directory: ./check-balance-droid
+        run: npm ci
+
+      - name: Run lint
+        working-directory: ./check-balance-droid
+        run: npm run lint
+
+      - name: Compile TypeScript
+        working-directory: ./check-balance-droid
+        run: npm run compile
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Package extension
+        working-directory: ./check-balance-droid
+        run: vsce package --allow-missing-repository
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: check-balance-droid/*.vsix
+          tag_name: check-balance-droid-v${{ steps.extract_version.outputs.version }}
+          name: Check Balance Droid v${{ steps.extract_version.outputs.version }}
+          body: |
+            ## Check Balance Droid v${{ steps.extract_version.outputs.version }}
+
+            ### 安装方式
+            1. 下载下方的 `.vsix` 文件
+            2. 在 VSCode 中按 `Ctrl+Shift+P` (Windows/Linux) 或 `Cmd+Shift+P` (macOS)
+            3. 输入 "Install from VSIX" 并选择下载的文件
+
+            ### 功能说明
+            查看 Factory AI 余额使用情况
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

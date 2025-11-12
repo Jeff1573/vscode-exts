@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "watch",
+      "problemMatcher": ["$tsc-watch"],
+      "label": "npm: watch",
+      "detail": "tsc -watch -p ./"
+    },
+    {
+      "type": "npm",
+      "script": "compile",
+      "problemMatcher": ["$tsc"],
+      "label": "npm: compile",
+      "detail": "tsc -p ./"
+    }
+  ]
+}
+
