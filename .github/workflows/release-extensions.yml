@@ -16,40 +16,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract extension info from tag
+      - name: Extract version from tag
         id: tag_info
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          EXT_NAME=${TAG_NAME%-v*}
           VERSION=${TAG_NAME#*-v}
 
-          echo "extension=$EXT_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
 
-          echo "Extension: $EXT_NAME"
+          echo "Tag: $TAG_NAME"
           echo "Version: $VERSION"
-
-      - name: Verify extension directory exists
-        run: |
-          if [ ! -d "./${{ steps.tag_info.outputs.extension }}" ]; then
-            echo "Error: Extension directory ./${{ steps.tag_info.outputs.extension }} not found"
-            exit 1
-          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ${{ steps.tag_info.outputs.extension }}/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./${{ steps.tag_info.outputs.extension }}
         run: npm ci
 
       - name: Run lint (if exists)
-        working-directory: ./${{ steps.tag_info.outputs.extension }}
         run: |
           if grep -q '"lint"' package.json; then
             npm run lint
@@ -58,11 +46,9 @@ jobs:
           fi
 
       - name: Compile TypeScript
-        working-directory: ./${{ steps.tag_info.outputs.extension }}
         run: npm run compile
 
       - name: Package extension
-        working-directory: ./${{ steps.tag_info.outputs.extension }}
         run: |
           if grep -q '"package"' package.json; then
             npm run package
@@ -73,7 +59,6 @@ jobs:
 
       - name: Get extension display name
         id: ext_info
-        working-directory: ./${{ steps.tag_info.outputs.extension }}
         run: |
           DISPLAY_NAME=$(node -p "require('./package.json').displayName || require('./package.json').name")
           DESCRIPTION=$(node -p "require('./package.json').description || ''")
@@ -84,7 +69,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.tag_info.outputs.extension }}/*.vsix
+          files: ./*.vsix
           tag_name: ${{ steps.tag_info.outputs.tag }}
           name: ${{ steps.ext_info.outputs.display_name }} v${{ steps.tag_info.outputs.version }}
           body: |
