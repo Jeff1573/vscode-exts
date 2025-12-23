@@ -261,6 +261,14 @@ async function generateByOpenAI(diff: string): Promise<string> {
             text = lines[lines.length - 1] || reasoning.slice(0, 200);
           }
 
+          // 清理 markdown 代码块标记
+          if (text) {
+            text = text
+              .replace(/^```[\w]*\n?/gm, '')  // 移除开头的 ```
+              .replace(/\n?```$/gm, '')        // 移除结尾的 ```
+              .trim();
+          }
+
           console.log('[DEBUG] 最终文本:', text);
           resolve(text || '');
         } catch (err: any) {

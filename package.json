@@ -2,7 +2,7 @@
   "name": "auto-commit-ext",
   "displayName": "Auto Commit Message",
   "description": "基于暂存区更改自动生成并填充 Git 提交信息",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "local",
   "license": "MIT",
   "repository": {
